@@ -1,0 +1,30 @@
+import time
+import RobotRaconteur as RR
+RRN = RR.RobotRaconteurNode.s
+
+def main():
+    t1 = RR.LocalTransport()
+    RRN.RegisterTransport(t1)
+    
+
+    t2 = RR.TcpTransport()
+    RRN.RegisterTransport(t2)
+
+    myRoboClaw = RRN.ConnectService('tcp://localhost:38342/roboClawController/wheelChairControl')
+
+    myRoboClaw.setM1(150)
+    myRoboClaw.setM2(150)
+    
+    
+    time.sleep(2)
+
+
+    myRoboClaw.setM1(0)
+    myRoboClaw.setM2(0)
+
+    RRN.Shutdown()
+  
+
+if __name__ == '__main__':
+    main()
+

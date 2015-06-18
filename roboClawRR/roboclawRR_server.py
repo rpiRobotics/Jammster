@@ -151,7 +151,8 @@ def main():
     RRN.RegisterServiceType(service_def)
     RRN.RegisterService("wheelChairControl", "roboClawController.RoboClawState", myRoboClaw)
 
-    #update duty cycle at 20Hz
+    # update duty cycle at 20Hz
+    # stop wheelchair if a command hasnt been received in the last 1/4 second
     while 1:
 	if time.time() - lastMessageTime < .250:
             SetM1DutyAccel(200,  int(myRoboClaw.m1Duty))

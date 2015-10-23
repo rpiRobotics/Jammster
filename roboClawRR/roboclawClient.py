@@ -11,14 +11,14 @@ def main():
     RRN.RegisterTransport(t2)
 	
     # example connect string
-    myRoboClaw = RRN.ConnectService('tcp://localhost:33719/roboClawController/wheelChairControl')
+    myRoboClaw = RRN.ConnectService('tcp://localhost:34314/roboClawController/wheelChairControl')
 
 
     # go forward for 3 seconds, send a command 20 times a second to prevent auto stop
     timeNow = time.time()
-    while time.time() - timeNow < 3:
-        myRoboClaw.setM1(int(-180))
-        myRoboClaw.setM2(int(-180))
+    while time.time() - timeNow < 10:
+        myRoboClaw.setM1(int(10000))
+        myRoboClaw.setM2(int(10000))
         time.sleep(.05)
     
     print "stopping"

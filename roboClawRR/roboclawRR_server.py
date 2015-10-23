@@ -8,6 +8,7 @@ import time
 import sys
 import serial
 import struct
+import roboclaw
 
 
 # TO USE
@@ -16,7 +17,8 @@ import struct
 # set dutyMax command
 
 
-port = serial.Serial("/dev/ttyACM0", baudrate=38400, timeout=.5)
+address = 0x80
+roboclaw.Open("/dev/ttyACM0",115200)
 lastMessageTime = time.time()
 
 
@@ -26,7 +28,7 @@ class RoboClawState:
         self.m1Duty = 0
         self.m2Duty = 0
         #largest absolute value that the motors can be set to
-        self.dutyMax = 180
+        self.dutyMax = 10000
         self._lock = threading.RLock()
         
      
@@ -54,9 +56,8 @@ class RoboClawState:
             self.m2Duty = newDuty
 
     def writePulseWidths(self):
-        SetM1DutyAccel(200,  int(self.m1Duty))
-        SetM2DutyAccel(200,  int(self.m2Duty))
-
+        roboclaw.DutyAccelM1(address,5000,int(self.m1Duty))
+        roboclaw.DutyAccelM2(address,5000,int(self.m2Duty))
 
 
 
@@ -72,62 +73,6 @@ def get_open_port():
     sock.close()
     time.sleep(3)
     return port[1]
-
-def writebyte(val):
-    global checksum
-    checksum += val
-    return port.write(struct.pack('>B',val));
-def writesbyte(val):
-    global checksum
-    checksum += val
-    return port.write(struct.pack('>b',val));
-def writeword(val):
-    global checksum
-    checksum += val
-    checksum += (val>>8)&0xFF
-    return port.write(struct.pack('>H',val));
-def writesword(val):
-    global checksum
-    checksum += val
-    checksum += (val>>8)&0xFF
-    return port.write(struct.pack('>h',val));
-def writelong(val):
-    global checksum
-    checksum += val
-    checksum += (val>>8)&0xFF
-    checksum += (val>>16)&0xFF
-    checksum += (val>>24)&0xFF
-    return port.write(struct.pack('>L',val));
-def writeslong(val):
-    global checksum
-    checksum += val
-    checksum += (val>>8)&0xFF
-    checksum += (val>>16)&0xFF
-    checksum += (val>>24)&0xFF
-    return port.write(struct.pack('>l',val));
-
-def sendcommand(address,command):
-    global checksum
-    checksum = address
-    port.write(chr(address));
-    checksum += command
-    port.write(chr(command));
-    return;
-
-def SetM1DutyAccel(accel,duty):
-    sendcommand(128,52)
-    writesword(duty)
-    writeword(accel)
-    writebyte(checksum&0x7F);
-    return
-
-def SetM2DutyAccel(accel,duty):
-    sendcommand(128,53)
-    writesword(duty)
-    writeword(accel)
-    writebyte(checksum&0x7F);
-    return;
-
 
 
 def main():
@@ -154,13 +99,14 @@ def main():
     # update duty cycle at 20Hz
     # stop wheelchair if a command hasnt been received in the last 1/4 second
     while 1:
-	if time.time() - lastMessageTime < .250:
-            SetM1DutyAccel(200,  int(myRoboClaw.m1Duty))
-            SetM2DutyAccel(200,  int(myRoboClaw.m2Duty))
+        if time.time() - lastMessageTime < .250:
+            roboclaw.DutyAccelM1(address,5000,int(myRoboClaw.m1Duty))
+            roboclaw.DutyAccelM1(address,5000,int(myRoboClaw.m2Duty))
         
         else:
-	    SetM1DutyAccel(200,  int(0))
-            SetM2DutyAccel(200,  int(0))
+            roboclaw.DutyAccelM1(address,30000,0)
+            roboclaw.DutyAccelM1(address,30000,0)
+        
         time.sleep(.05)
 
     RRN.Shutdown()

@@ -28,7 +28,7 @@ class RoboClawState:
         self.m1Duty = 0
         self.m2Duty = 0
         #largest absolute value that the motors can be set to
-        self.dutyMax = 10000
+        self.dutyMax = 180
         self._lock = threading.RLock()
         
      
@@ -101,11 +101,11 @@ def main():
     while 1:
         if time.time() - lastMessageTime < .250:
             roboclaw.DutyAccelM1(address,5000,int(myRoboClaw.m1Duty))
-            roboclaw.DutyAccelM1(address,5000,int(myRoboClaw.m2Duty))
+            roboclaw.DutyAccelM2(address,5000,int(myRoboClaw.m2Duty))
         
         else:
             roboclaw.DutyAccelM1(address,30000,0)
-            roboclaw.DutyAccelM1(address,30000,0)
+            roboclaw.DutyAccelM2(address,30000,0)
         
         time.sleep(.05)
 

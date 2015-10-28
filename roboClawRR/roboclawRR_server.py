@@ -28,7 +28,7 @@ class RoboClawState:
         self.m1Duty = 0
         self.m2Duty = 0
         #largest absolute value that the motors can be set to
-        self.dutyMax = 180
+        self.dutyMax = 4000
         self._lock = threading.RLock()
         
      
@@ -100,6 +100,7 @@ def main():
     # stop wheelchair if a command hasnt been received in the last 1/4 second
     while 1:
         if time.time() - lastMessageTime < .250:
+            print myRoboClaw.m1Duty, myRoboClaw.m2Duty
             roboclaw.DutyAccelM1(address,5000,int(myRoboClaw.m1Duty))
             roboclaw.DutyAccelM2(address,5000,int(myRoboClaw.m2Duty))
         

@@ -5,8 +5,7 @@ option version 0.5
 object RoboClawState
   
     function void setDutyMax(uint16 newMax)
-    function void setM1(int16 newDuty)
-    function void setM2(int16 newDuty)
-    function void writePulseWidths()    
+    function void setMDuties(int16 leftDuty,int16 rightDuty)
+    function void setMVelocities(double leftV,double rightV)
 
 end object

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import RobotRaconteur as RR
 import threading
 RRN = RR.RobotRaconteurNode.s
@@ -18,7 +19,7 @@ import roboclaw
 
 
 address = 0x80
-roboclaw.Open("/dev/ttyACM0",115200)
+roboclaw.Open("/dev/ttyACM2",115200)
 lastMessageTime = time.time()
 
 

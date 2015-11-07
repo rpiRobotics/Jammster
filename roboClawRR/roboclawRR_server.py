@@ -27,9 +27,10 @@ lastMessageTime = time.time()
 # catch control c to allow for use of the same port
 def signal_handler(signal, frame):
         print('Ctrl+C shutdown!')
+        RRN.Shutdown()
+        time.sleep(.4)
         roboclaw.DutyAccelM1(address,30000,0)
         roboclaw.DutyAccelM2(address,30000,0)
-        RRN.Shutdown()
         sys.exit(0)
 
 class RoboClawState:
@@ -155,8 +156,19 @@ def main():
             roboclaw.DutyAccelM2(address,5000,int(myRoboClaw.m2Duty))
             
         if myRoboClaw.controlMode == 'Velocity':
-            leftSpeed= myRoboClaw.imuGateway.IMU1_read()[5]
-            rightSpeed = myRoboClaw.imuGateway.IMU2_read()[5]
+            leftSpeed = 0
+            rightSpeed = 0
+            
+            # if read fails, stop the wheelchair
+            try:
+                leftSpeed= myRoboClaw.imuGateway.IMU1_read()[5]
+                rightSpeed = myRoboClaw.imuGateway.IMU2_read()[5]
+            except:
+                roboclaw.DutyAccelM1(address,30000,0)
+                roboclaw.DutyAccelM2(address,30000,0)
+                RRN.Shutdown()
+                sys.exit(0)
+                
             leftCommand = myRoboClaw.pidControllerL.update(leftSpeed) + myRoboClaw.m1Duty 
             rightCommand = myRoboClaw.pidControllerR.update(rightSpeed) + myRoboClaw.m2Duty 
             #print leftCommand

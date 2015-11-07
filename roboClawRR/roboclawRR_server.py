@@ -10,8 +10,9 @@ import sys
 import serial
 import struct
 import roboclaw
+import signal
 from PID import PID
-
+import argparse
 
 # TO USE
 # send at least 4 commands a second or the chair will stop automatically
@@ -23,10 +24,22 @@ address = 0x80
 roboclaw.Open("/dev/ttyACM1",115200)
 lastMessageTime = time.time()
 
+# catch control c to allow for use of the same port
+def signal_handler(signal, frame):
+        print('Ctrl+C shutdown!')
+        roboclaw.DutyAccelM1(address,30000,0)
+        roboclaw.DutyAccelM2(address,30000,0)
+        RRN.Shutdown()
+        sys.exit(0)
 
 class RoboClawState:
     """ test  """
-    def __init__(self):
+    def __init__(self, imuConnectString):
+        
+        # go to default connect string if no string was specified
+        if imuConnectString == None: 
+            imuConnectString ='tcp://localhost:10001/arduinoIMU/arduinoIMUData' 
+            
         self.m1Duty = 0
         self.m2Duty = 0
         #largest absolute value that the motors can be set to
@@ -42,7 +55,7 @@ class RoboClawState:
         
         # try to find and connect to NRF IMU server to get wheel velocities
         try:
-            self.imuGateway = RRN.ConnectService('tcp://localhost:39085/arduinoIMU/arduinoIMUData')
+            self.imuGateway = RRN.ConnectService(imuConnectString)
         except:
             print "Couldn't find NRF IMU server, unable to accept velocity commands!"
             self.canMeasureWheelVelocities = False
@@ -53,6 +66,7 @@ class RoboClawState:
         self.dutyMax = newMax
 
     def setMDuties(self, leftDuty, rightDuty):
+        print "received command"
         self.controlMode = 'Duty'
         global lastMessageTime
         lastMessageTime = time.time()
@@ -90,12 +104,23 @@ def get_open_port():
 
 
 def main():
+
+    # accept arguments to command line call
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--imuConnectString", help="the connect string of the IMU server")
+    parser.add_argument("--port", help="port to start this server on")
+    args = parser.parse_args()
+    connectString = args.imuConnectString
+    port = args.port
+    
+    
     t1 = RR.LocalTransport()
     t1.StartServerAsNodeName("roboClawController")
     RRN.RegisterTransport(t1)
     
-
-    port = get_open_port()
+    # go to default port if one was not specified by commandline
+    if port == None:
+        port = 10000
     print "Connect string: tcp://localhost:" + str(port) +"/roboClawController/wheelChairControl"
     t2 = RR.TcpTransport()
     t2.EnableNodeAnnounce()
@@ -105,13 +130,19 @@ def main():
     with open('roboClaw_service.robodef', 'r') as f:
         service_def = f.read()
     
-    myRoboClaw = RoboClawState()
+    myRoboClaw = RoboClawState(connectString)
 
     RRN.RegisterServiceType(service_def)
     RRN.RegisterService("wheelChairControl", "roboClawController.RoboClawState", myRoboClaw)
 
     # update duty cycle at 20Hz
     # stop wheelchair if a command hasnt been received in the last 1/4 second
+    
+    ##TESTING VARIABLES
+    timeList = []
+    speedList = []
+    setpointList = []
+    start = time.time()
     while 1:
     
         if time.time() - lastMessageTime > .250:
@@ -134,9 +165,13 @@ def main():
             roboclaw.DutyAccelM1(address,5000,int(myRoboClaw.m1Duty))
             roboclaw.DutyAccelM2(address,5000,int(myRoboClaw.m2Duty))
             
-        
+            #collect data
+            timeList.append(time.time() - start)
+            speedList.append(rightSpeed)
+            setpointList.append(rightCommand)
+            
         time.sleep(.05)
-
+        
     RRN.Shutdown()
   
 

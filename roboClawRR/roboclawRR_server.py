@@ -143,6 +143,8 @@ def main():
     while 1:
     
         if time.time() - lastMessageTime > .250:
+            myRoboClaw.m1Duty = 0
+            myRoboClaw.m2Duty = 0
             roboclaw.DutyAccelM1(address,30000,0)
             roboclaw.DutyAccelM2(address,30000,0)
             continue

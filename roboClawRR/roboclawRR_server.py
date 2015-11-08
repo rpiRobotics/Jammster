@@ -21,7 +21,7 @@ import argparse
 
 
 address = 0x80
-roboclaw.Open("/dev/ttyACM1",115200)
+
 lastMessageTime = time.time()
 
 # catch control c to allow for use of the same port
@@ -95,25 +95,21 @@ class RoboClawState:
 #********************************#
 
 
-def get_open_port():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('127.0.0.1', 0))
-    port = sock.getsockname()
-    sock.close()
-    time.sleep(3)
-    return port[1]
-
-
 def main():
-
     # accept arguments to command line call
     parser = argparse.ArgumentParser()
     parser.add_argument("--imuConnectString", help="the connect string of the IMU server")
-    parser.add_argument("--port", help="port to start this server on")
+    parser.add_argument("--serverPort", help="port to start this server on")
+    parser.add_argument("--roboclawUSBPort", help="USB port that the roboclaw is on")
     args = parser.parse_args()
     connectString = args.imuConnectString
-    port = args.port
+    port = args.serverPort
+    roboclawPort = args.roboclawUSBPort
     
+    if roboclawPort == None:
+        roboclawPort = '/dev/ttyACM2'
+        
+    roboclaw.Open(roboclawPort,115200)
     
     t1 = RR.LocalTransport()
     t1.StartServerAsNodeName("roboClawController")

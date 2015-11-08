@@ -33,6 +33,13 @@ def signal_handler(signal, frame):
         roboclaw.DutyAccelM2(address,30000,0)
         sys.exit(0)
 
+def shutdown():
+        roboclaw.DutyAccelM1(address,30000,0)
+        roboclaw.DutyAccelM2(address,30000,0)
+        RRN.Shutdown()
+        sys.exit(0)
+    
+
 class RoboClawState:
     """ test  """
     def __init__(self, imuConnectString):
@@ -148,6 +155,8 @@ def main():
     # update duty cycle at 20Hz
     # stop wheelchair if a command hasnt been received in the last 1/4 second
     start = time.time()
+    lastLeftSpeed = -1
+    lastRightSpeed = -1
     while 1:
     
         if time.time() - lastMessageTime > .250:
@@ -170,11 +179,14 @@ def main():
                 leftSpeed= myRoboClaw.imuGateway.IMU1_read()[5]
                 rightSpeed = myRoboClaw.imuGateway.IMU2_read()[5]
             except:
-                roboclaw.DutyAccelM1(address,30000,0)
-                roboclaw.DutyAccelM2(address,30000,0)
-                RRN.Shutdown()
-                sys.exit(0)
+                shutdown()
                 
+            # catch the case when the NRF server gives repeat values to prevent super fast wheelchair
+            if leftSpeed == lastLeftSpeed or rightSpeed == lastRightSpeed:
+                shutdown()
+                
+            lastRightSpeed = rightSpeed
+            lastLeftSpeed = leftSpeed
             leftCommand = myRoboClaw.pidControllerL.update(leftSpeed) + myRoboClaw.m1Duty 
             rightCommand = myRoboClaw.pidControllerR.update(rightSpeed) + myRoboClaw.m2Duty 
             leftDesiredV = myRoboClaw.pidControllerL.getPoint()

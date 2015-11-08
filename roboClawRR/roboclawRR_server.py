@@ -51,8 +51,8 @@ class RoboClawState:
         
         self.canMeasureWheelVelocities = True
         
-        self.pidControllerR = PID(50,0,0,0,0,0,0)
-        self.pidControllerL = PID(-50,0,0,0,0,0,0)
+        self.pidControllerR = PID(10,0,0,0,0,0,0)
+        self.pidControllerL = PID(-10,0,0,0,0,0,0)
         
         # try to find and connect to NRF IMU server to get wheel velocities
         try:
@@ -177,8 +177,10 @@ def main():
                 
             leftCommand = myRoboClaw.pidControllerL.update(leftSpeed) + myRoboClaw.m1Duty 
             rightCommand = myRoboClaw.pidControllerR.update(rightSpeed) + myRoboClaw.m2Duty 
-            #print leftCommand
-            print rightCommand, rightSpeed
+            leftDesiredV = myRoboClaw.pidControllerL.getPoint()
+            rightDesiredV = myRoboClaw.pidControllerR.getPoint()
+            print "leftCommand: ", leftDesiredV, "leftSpeed: ", rightSpeed
+            print "rightCommand: ", rightDesiredV, "rightSpeed: ", rightSpeed
             myRoboClaw.internalSetDuties(leftCommand, rightCommand)
             roboclaw.DutyAccelM1(address,5000,int(myRoboClaw.m1Duty))
             roboclaw.DutyAccelM2(address,5000,int(myRoboClaw.m2Duty))

@@ -157,6 +157,8 @@ def main():
     start = time.time()
     lastLeftSpeed = -1
     lastRightSpeed = -1
+    # to track the number of times the last reading was repeated
+    repeatCount = 0
     while 1:
     
         if time.time() - lastMessageTime > .250:
@@ -183,20 +185,23 @@ def main():
                 
             # catch the case when the NRF server gives repeat values to prevent super fast wheelchair
             if leftSpeed == lastLeftSpeed or rightSpeed == lastRightSpeed:
-                shutdown()
+                repeatCount+=1
+                if repeatCount > 5:
+                    shutdown()
+            else:
+                repeatCount = 0
+                lastRightSpeed = rightSpeed
+                lastLeftSpeed = leftSpeed
+                leftCommand = myRoboClaw.pidControllerL.update(leftSpeed) + myRoboClaw.m1Duty 
+                rightCommand = myRoboClaw.pidControllerR.update(rightSpeed) + myRoboClaw.m2Duty 
+                leftDesiredV = myRoboClaw.pidControllerL.getPoint()
+                rightDesiredV = myRoboClaw.pidControllerR.getPoint()
+                print "leftCommand: ", leftDesiredV, "leftSpeed: ", rightSpeed
+                print "rightCommand: ", rightDesiredV, "rightSpeed: ", rightSpeed
+                myRoboClaw.internalSetDuties(leftCommand, rightCommand)
+                roboclaw.DutyAccelM1(address,5000,int(myRoboClaw.m1Duty))
+                roboclaw.DutyAccelM2(address,5000,int(myRoboClaw.m2Duty))
                 
-            lastRightSpeed = rightSpeed
-            lastLeftSpeed = leftSpeed
-            leftCommand = myRoboClaw.pidControllerL.update(leftSpeed) + myRoboClaw.m1Duty 
-            rightCommand = myRoboClaw.pidControllerR.update(rightSpeed) + myRoboClaw.m2Duty 
-            leftDesiredV = myRoboClaw.pidControllerL.getPoint()
-            rightDesiredV = myRoboClaw.pidControllerR.getPoint()
-            print "leftCommand: ", leftDesiredV, "leftSpeed: ", rightSpeed
-            print "rightCommand: ", rightDesiredV, "rightSpeed: ", rightSpeed
-            myRoboClaw.internalSetDuties(leftCommand, rightCommand)
-            roboclaw.DutyAccelM1(address,5000,int(myRoboClaw.m1Duty))
-            roboclaw.DutyAccelM2(address,5000,int(myRoboClaw.m2Duty))
-            
         time.sleep(.05)
         
     RRN.Shutdown()

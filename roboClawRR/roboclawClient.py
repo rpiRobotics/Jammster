@@ -16,10 +16,10 @@ def main():
 
     # go forward for 3 seconds, send a command 20 times a second to prevent auto stop
     timeNow = time.time()
-    myRoboClaw.setDutyMax(20000)
+    myRoboClaw.setDutyMax(5000)
     while time.time() - timeNow < 10:
         #myRoboClaw.setMDuties(int(8500),int(10000))
-        myRoboClaw.setMVelocities(15,15)
+        myRoboClaw.setMVelocities(40,40)
         time.sleep(.02)
     
     print "stopping"

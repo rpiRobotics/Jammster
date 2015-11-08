@@ -51,7 +51,7 @@ class RoboClawState:
         
         self.canMeasureWheelVelocities = True
         
-        self.pidControllerR = PID(-50,0,0,0,0,0,0)
+        self.pidControllerR = PID(50,0,0,0,0,0,0)
         self.pidControllerL = PID(-50,0,0,0,0,0,0)
         
         # try to find and connect to NRF IMU server to get wheel velocities

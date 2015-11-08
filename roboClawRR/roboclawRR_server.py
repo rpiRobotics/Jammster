@@ -66,11 +66,24 @@ class RoboClawState:
     def setDutyMax(self, newMax):          
         self.dutyMax = newMax
 
+    # exposed to user through RR (implicitly sets to Duty mode)
     def setMDuties(self, leftDuty, rightDuty):
         print "received command"
         self.controlMode = 'Duty'
         global lastMessageTime
         lastMessageTime = time.time()
+        if abs(leftDuty) > self.dutyMax:
+            self.m1Duty = self.dutyMax * cmp(leftDuty, 0)
+        else:
+            self.m1Duty = leftDuty
+
+    	if abs(rightDuty) > self.dutyMax:
+            self.m2Duty = self.dutyMax * cmp(rightDuty, 0)
+        else:
+            self.m2Duty = rightDuty
+    
+    # used by velocity controller to write motor duties without setting to Duty mode or updating time
+    def internalSetDuties(self, leftDuty, rightDuty):
         if abs(leftDuty) > self.dutyMax:
             self.m1Duty = self.dutyMax * cmp(leftDuty, 0)
         else:
@@ -134,11 +147,6 @@ def main():
 
     # update duty cycle at 20Hz
     # stop wheelchair if a command hasnt been received in the last 1/4 second
-    
-    ##TESTING VARIABLES
-    timeList = []
-    speedList = []
-    setpointList = []
     start = time.time()
     while 1:
     
@@ -171,14 +179,9 @@ def main():
             rightCommand = myRoboClaw.pidControllerR.update(rightSpeed) + myRoboClaw.m2Duty 
             #print leftCommand
             print rightCommand, rightSpeed
-            myRoboClaw.setMDuties(leftCommand, rightCommand)
+            myRoboClaw.internalSetDuties(leftCommand, rightCommand)
             roboclaw.DutyAccelM1(address,5000,int(myRoboClaw.m1Duty))
             roboclaw.DutyAccelM2(address,5000,int(myRoboClaw.m2Duty))
-            
-            #collect data
-            timeList.append(time.time() - start)
-            speedList.append(rightSpeed)
-            setpointList.append(rightCommand)
             
         time.sleep(.05)
         

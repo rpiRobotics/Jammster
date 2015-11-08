@@ -106,7 +106,7 @@ class RoboClawState:
         global lastMessageTime
         lastMessageTime = time.time()
         #print leftV,rightV
-        self.pidControllerL.setPoint(leftV)
+        self.pidControllerL.setPoint(-leftV)
         self.pidControllerR.setPoint(rightV)
 
 

@@ -181,12 +181,14 @@ def main():
                 leftSpeed= myRoboClaw.imuGateway.IMU1_read()[5]
                 rightSpeed = myRoboClaw.imuGateway.IMU2_read()[5]
             except:
+                print "Couldn't read nrf server!"
                 shutdown()
                 
             # catch the case when the NRF server gives repeat values to prevent super fast wheelchair
             if leftSpeed == lastLeftSpeed or rightSpeed == lastRightSpeed:
                 repeatCount+=1
                 if repeatCount > 5:
+                    print "Too many repeated values!"
                     shutdown()
             else:
                 repeatCount = 0

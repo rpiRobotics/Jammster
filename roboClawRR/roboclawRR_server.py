@@ -51,7 +51,7 @@ class RoboClawState:
         self.m1Duty = 0
         self.m2Duty = 0
         #largest absolute value that the motors can be set to
-        self.dutyMax = 10000
+        self.dutyMax = 5000
         
         # control mode will be either Duty or Velocity depending on last command sent
         self.controlMode = 'Duty'

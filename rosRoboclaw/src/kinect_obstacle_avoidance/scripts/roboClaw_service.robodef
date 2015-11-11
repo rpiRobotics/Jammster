@@ -1,0 +1,11 @@
+service roboClawController
+
+option version 0.5
+
+object RoboClawState
+  
+    function void setDutyMax(uint16 newMax)
+    function void setMDuties(int16 leftDuty,int16 rightDuty)
+    function void setMVelocities(double leftV,double rightV)
+
+end object

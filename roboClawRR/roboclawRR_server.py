@@ -13,6 +13,9 @@ import roboclaw
 import signal
 from PID import PID
 import argparse
+from sensor_msgs.msg import LaserScan
+import rospy
+
 
 # TO USE
 # send at least 4 commands a second or the chair will stop automatically
@@ -21,7 +24,8 @@ import argparse
 
 
 address = 0x80
-
+# minDistance is the minimum distance that the kinect has read
+minDistance = 0
 lastMessageTime = time.time()
 
 # catch control c to allow for use of the same port
@@ -58,8 +62,8 @@ class RoboClawState:
         
         self.canMeasureWheelVelocities = True
         
-        self.pidControllerR = PID(10,0,0,0,0,0,0)
-        self.pidControllerL = PID(-10,0,0,0,0,0,0)
+        self.pidControllerR = PID(20,0,0,0,0,0,0)
+        self.pidControllerL = PID(-20,0,0,0,0,0,0)
         
         # try to find and connect to NRF IMU server to get wheel velocities
         try:
@@ -114,8 +118,18 @@ class RoboClawState:
 #             FUNCTIONS          #
 #********************************#
 
+def scanCallBack(data):
+    # distance is a list of distances sensed by the kinect
+    distances = data.ranges
+    distances = filter(lambda a: a > 0 and a<10,  distances)
+    minDistance = min(distances)
+    print minDistance
+
 
 def main():
+    rospy.init_node('kinect_avoid', anonymous = True)
+    rospy.Subscriber("/scan", LaserScan,  scanCallBack)
+
     # accept arguments to command line call
     parser = argparse.ArgumentParser()
     parser.add_argument("--imuConnectString", help="the connect string of the IMU server")
@@ -159,8 +173,9 @@ def main():
     lastRightSpeed = -1
     # to track the number of times the last reading was repeated
     repeatCount = 0
+    lastMeasurement = time.time()
     while 1:
-    
+     
         if time.time() - lastMessageTime > .250:
             myRoboClaw.m1Duty = 0
             myRoboClaw.m2Duty = 0
@@ -194,16 +209,20 @@ def main():
                 repeatCount = 0
                 lastRightSpeed = rightSpeed
                 lastLeftSpeed = leftSpeed
-                leftCommand = myRoboClaw.pidControllerL.update(leftSpeed) + myRoboClaw.m1Duty 
-                rightCommand = myRoboClaw.pidControllerR.update(rightSpeed) + myRoboClaw.m2Duty 
+                dt = time.time() - lastMeasurement
+                leftCommand = myRoboClaw.pidControllerL.update(leftSpeed,dt) + myRoboClaw.m1Duty 
+                rightCommand = myRoboClaw.pidControllerR.update(rightSpeed,dt) + myRoboClaw.m2Duty 
                 leftDesiredV = myRoboClaw.pidControllerL.getPoint()
                 rightDesiredV = myRoboClaw.pidControllerR.getPoint()
+#                print "Left error: ", myRoboClaw.pidControllerL.getError(), "Left Derivator: ",  myRoboClaw.pidControllerL.getDerivator()
+#                print "Right error: ", myRoboClaw.pidControllerR.getError(), "Right Derivator: ",  myRoboClaw.pidControllerR.getDerivator()
                 print "leftCommand: ", leftDesiredV, "leftSpeed: ", rightSpeed
                 print "rightCommand: ", rightDesiredV, "rightSpeed: ", rightSpeed
                 myRoboClaw.internalSetDuties(leftCommand, rightCommand)
                 roboclaw.DutyAccelM1(address,5000,int(myRoboClaw.m1Duty))
                 roboclaw.DutyAccelM2(address,5000,int(myRoboClaw.m2Duty))
                 
+        lastMeasurement = time.time()
         time.sleep(.05)
         
     RRN.Shutdown()

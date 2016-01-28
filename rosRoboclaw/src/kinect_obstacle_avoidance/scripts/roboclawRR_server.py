@@ -205,27 +205,27 @@ def main():
                     shutdown()
             else:
                 # dont go forward if there is something or update
-                if minDistance < .8 and myRoboClaw.m1Duty > 0 and myRoboClaw.m2Duty > 0:
+                repeatCount = 0
+                lastRightSpeed = rightSpeed
+                lastLeftSpeed = leftSpeed
+                dt = time.time() - lastMeasurement
+                leftCommand = myRoboClaw.pidControllerL.update(leftSpeed,dt) + myRoboClaw.m1Duty
+                rightCommand = myRoboClaw.pidControllerR.update(rightSpeed,dt) + myRoboClaw.m2Duty
+                leftDesiredV = myRoboClaw.pidControllerL.getPoint()
+                rightDesiredV = myRoboClaw.pidControllerR.getPoint()
+                print "leftCommand: ", -leftDesiredV, "leftSpeed: ", -leftSpeed
+                print "rightCommand: ", rightDesiredV, "rightSpeed: ", rightSpeed
+                myRoboClaw.internalSetDuties(leftCommand, rightCommand)
+
+                if minDistance < .7 and myRoboClaw.m1Duty > 0 and myRoboClaw.m2Duty > 0:
                     print "Something in the way, stopping"
                     roboclaw.DutyAccelM1(address,30000,0)
                     roboclaw.DutyAccelM2(address,30000,0)
                     myRoboClaw.pidControllerL.setPoint(0)
                     myRoboClaw.pidControllerR.setPoint(0)
+
                 # update, we are totally ok
                 else:
-                    repeatCount = 0
-                    lastRightSpeed = rightSpeed
-                    lastLeftSpeed = leftSpeed
-                    dt = time.time() - lastMeasurement
-                    leftCommand = myRoboClaw.pidControllerL.update(leftSpeed,dt) + myRoboClaw.m1Duty 
-                    rightCommand = myRoboClaw.pidControllerR.update(rightSpeed,dt) + myRoboClaw.m2Duty 
-                    leftDesiredV = myRoboClaw.pidControllerL.getPoint()
-                    rightDesiredV = myRoboClaw.pidControllerR.getPoint()
-#                print "Left error: ", myRoboClaw.pidControllerL.getError(), "Left Derivator: ",  myRoboClaw.pidControllerL.getDerivator()
-#                print "Right error: ", myRoboClaw.pidControllerR.getError(), "Right Derivator: ",  myRoboClaw.pidControllerR.getDerivator()
-                    print "leftCommand: ", leftDesiredV, "leftSpeed: ", rightSpeed
-                    print "rightCommand: ", rightDesiredV, "rightSpeed: ", rightSpeed
-                    myRoboClaw.internalSetDuties(leftCommand, rightCommand)
                     roboclaw.DutyAccelM1(address,5000,int(myRoboClaw.m1Duty))
                     roboclaw.DutyAccelM2(address,5000,int(myRoboClaw.m2Duty))
                     
